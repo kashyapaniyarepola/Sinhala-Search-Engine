@@ -8,10 +8,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 es = Elasticsearch([{'host': 'localhost', 'port':9200}])
 
-def translate_to_english(value):
-	translator = Translator()
-	#english_term = translator.translate(value, dest='en')
-	return value
 
 def post_processing_text(results):
     list_cricketers = []
@@ -36,7 +32,7 @@ def post_processing_text(results):
     aggregations = results['aggregations']
     ball_ranks = aggregations['ball_rank']['buckets']
     bat_ranks = aggregations['bat_rank']['buckets']
-    teams = aggregations['teams']['buckets']['key']
+    teams = aggregations['teams']['buckets']
     wickets = aggregations['wickets']['buckets']
     runs = aggregations['runs']['buckets']
     bios = aggregations['bio']['buckets']
@@ -118,396 +114,114 @@ def search_text(search_term):
     list_cricketers, teams, gender =  post_processing_text(results)
     return list_cricketers, teams, gender
 
-# def search_filter_text(search_term, artist_filter, genre_filter, music_filter, lyrics_filter):
-#     must_list = [{
-#                     "multi_match": {
-#                         "query" : search_term,
-#                         "type" : "best_fields",
-#                         "fields" : [
-#                             "title", "Artist_si", "Artist_en","Genre_si","Genre_en", 
-#                             "Lyrics_si", "Lyrics_en","Music_si","Music_en", "song_lyrics"]
-                            
-#                     }
-#                 }]
-#     if len(artist_filter) != 0 :
-#         for i in artist_filter :
-#             must_list.append({"match" : {"Artist_si": i}})
-#     if len(genre_filter) != 0 :
-#         for i in genre_filter :
-#             must_list.append({"match" : {"Genre_si": i}})
-#     if len(music_filter) != 0 :
-#         for i in music_filter :
-#             must_list.append({"match" : {"Music_si": i}})
-#     if len(lyrics_filter) != 0 :
-#         for i in lyrics_filter :
-#             must_list.append({"match" : {"Lyrics_si": i}})
-#     results = es.search(index='index-songs',doc_type = 'sinhala-songs',body={
-#         "size" : 500,
-#         "query" :{
-#             "bool": {
-#                 "must": must_list
-#             }
-#         },
-#         "aggs": {
-#             "genre": {
-#                 "terms": {
-#                     "field": "Genre_si.keyword",
-#                     "size" : 15    
-#                 }        
-#             },
-#             "artist": {
-#                 "terms": {
-#                     "field":"Artist_si.keyword",
-#                     "size" : 15
-#                 }             
-#             },
-#             "music": {
-#                 "terms": {
-#                     "field":"Music_si.keyword",
-#                     "size" : 15
-#                 }             
-#             },
-#             "lyrics": {
-#                 "terms": {
-#                     "field":"Lyrics_si.keyword",
-#                     "size" : 15
-#                 }             
-#             },
+def search_query_classifier(search_term):
+    classifier = False
+    gender_filter = [] 
+    teams_filter = []
 
-#         }
-#     })
-#     list_songs, artists, genres, music, lyrics = post_processing_text(results)
-#     return list_songs, artists, genres, music, lyrics
-
-
-
-
-
-def intent_classifier(search_term):
-
-    select_type = False
-    resultword = ''
-
-    keyword_top = ["top", "best", "popular", "good", "great"]
-    keyword_song = ["song", "sing", "sang", "songs", "sings"]
+    gender_keys = ["කාන්තා", "ක්‍රීඩිකාවෝ", "කාන්තාව", "ක්‍රීඩිකාව", "ක්‍රීඩිකාවන්"]
+    teams_keys = ["කණ්ඩායම", "සමාජය", "කණ්ඩායම්", "වෙනුවෙන්", "කණ්ඩායමට"]
     search_term_list = search_term.split()
-    for j in search_term_list : 
-        documents = [j]
-        documents.extend(keyword_top)
-        documents.extend(keyword_song)
-        tfidf_vectorizer = TfidfVectorizer(analyzer="char", token_pattern=u'(?u)\\b\w+\\b')
-        tfidf_matrix = tfidf_vectorizer.fit_transform(documents)
 
-        cs = cosine_similarity(tfidf_matrix[0:1],tfidf_matrix)
-        similarity_list = cs[0][1:]
+    for j in search_term_list:
+        if j in gender_keys:
+            gender_filter.append("කාන්තා")
+            classifier = True
+        if j in teams_keys:
+            # search_term_list.pop(j)
+            teams_filter.append(search_term)
+            classifier = True
 
-        for i in similarity_list :
-            if i > 0.8 :
-                select_type  = True
-    if select_type :
-        querywords = search_term.split()
-        querywords  = [word for word in querywords if word.lower() not in keyword_top]
-        querywords  = [word for word in querywords if word.lower() not in keyword_song]
-        resultword = ' '.join(querywords)
+    return classifier, gender_filter, teams_filter
 
-    
-    return select_type,  resultword
-
-
-def top_most_text(search_term):
-
-    with open('song-corpus/songs_meta_all.json') as f:
-        meta_data = json.loads(f.read())
-
-    artist_list = meta_data["Artist_en"]
-    genre_list = meta_data["Genre_en"]
-    music_list = meta_data["Music_en"]
-    lyrics_list = meta_data["Lyrics_en"]
-
-    documents_artist = [search_term]
-    documents_artist.extend(artist_list)
-    documents_genre = [search_term]
-    documents_genre.extend(genre_list)
-    documents_music = [search_term]
-    documents_music.extend(music_list)
-    documents_lyrics = [search_term]
-    documents_lyrics.extend(lyrics_list)
-    query = []
-    select_type = False
-
-    size = 100
-    term_list = search_term.split()
-    print(term_list)
-    for i in term_list:
-        if i.isnumeric():
-            size = int(i)
-
-    tfidf_vectorizer = TfidfVectorizer(analyzer="char", token_pattern=u'(?u)\\b\w+\\b')
-    tfidf_matrix = tfidf_vectorizer.fit_transform(documents_artist)
-
-    cs = cosine_similarity(tfidf_matrix[0:1],tfidf_matrix)
-
-    similarity_list = cs[0][1:]
-
-    max_val = max(similarity_list)
-    other_select = False
-    if max_val >  0.85 :
-        loc = np.where(similarity_list==max_val)
-        i = loc[0][0]
-        query.append({"match" : {"Artist_en": artist_list[i]}})
-        select_type = True
-        other_select = True
-
-    tfidf_vectorizer = TfidfVectorizer(analyzer="char", token_pattern=u'(?u)\\b\w+\\b')
-    tfidf_matrix = tfidf_vectorizer.fit_transform(documents_genre)
-
-    cs = cosine_similarity(tfidf_matrix[0:1],tfidf_matrix)
-
-    similarity_list = cs[0][1:]
-
-    max_val = max(similarity_list)
-    if max_val >  0.85 :
-        loc = np.where(similarity_list==max_val)
-        i = loc[0][0]
-        query.append({"match" : {"Genre_en": genre_list[i]}})
-        select_type = True
-
-    tfidf_vectorizer = TfidfVectorizer(analyzer="char", token_pattern=u'(?u)\\b\w+\\b')
-    tfidf_matrix = tfidf_vectorizer.fit_transform(documents_music)
-
-    cs = cosine_similarity(tfidf_matrix[0:1],tfidf_matrix)
-
-    similarity_list = cs[0][1:]
-    max_val = max(similarity_list)
-    if max_val >  0.85 and other_select == False:
-        loc = np.where(similarity_list==max_val)
-        i = loc[0][0]
-        query.append({"match" : {"Music_en": music_list[i]}})
-        select_type = True
-        other_select = True
-
-    tfidf_vectorizer = TfidfVectorizer(analyzer="char", token_pattern=u'(?u)\\b\w+\\b')
-    tfidf_matrix = tfidf_vectorizer.fit_transform(documents_lyrics)
-
-    cs = cosine_similarity(tfidf_matrix[0:1],tfidf_matrix)
-
-    similarity_list = cs[0][1:]
-    max_val = max(similarity_list)
-    if max_val >  0.85 and other_select == False:
-        loc = np.where(similarity_list==max_val)
-        i = loc[0][0]
-        query.append({"match" : {"Lyrics_en": lyrics_list[i]}})
-        select_type = True
-        other_select = True
-    
-    if select_type != True :
-        query.append({"match_all" : {}})
-
-    print(query)
-    results = es.search(index='index-songs',doc_type = 'sinhala-songs',body={
-        "size" : size,
+def search_filter_text(search_term, gender_filter, teams_filter):
+    must_list = [{
+                    "multi_match": {
+                        "query" : search_term,
+                        "type" : "best_fields",
+                        "fields" : [
+                            "name", "teams", "bio", 
+                            "career_info", "gender",
+                            "bat_rank","ball_rank","runs", "wickets"]
+                            
+                    }
+                }]
+    if len(gender_filter) != 0 :
+        must_list.append({"match" : {"gender": gender_filter[0]}})
+    if len(teams_filter) != 0 :
+        must_list.append({"match" : {"teams": teams_filter[0]}})
+   
+    results = es.search(index='index-cricket',doc_type = 'srilankan-cricketers',body={
+        "size" : 500,
         "query" :{
             "bool": {
-                "must": query
+                "must": must_list
             }
         },
-        "sort" :{
-            "views": {"order": "desc"}
-        },
         "aggs": {
-            "genre": {
+            "wickets": {
                 "terms": {
-                    "field": "Genre_si.keyword",
+                    "field": "wickets.keyword",
                     "size" : 15    
                 }        
             },
-            "artist": {
+            "runs": {
                 "terms": {
-                    "field":"Artist_si.keyword",
+                    "field": "runs.keyword",
+                    "size" : 15    
+                }        
+            },
+            "gender": {
+                "terms": {
+                    "field": "gender.keyword",
+                    "size" : 15    
+                }        
+            },
+            "bat_rank": {
+                "terms": {
+                    "field": "bat_rank.keyword",
+                    "size" : 15    
+                }        
+            },
+            "ball_rank": {
+                "terms": {
+                    "field": "ball_rank.keyword",
+                    "size" : 15    
+                }        
+            },
+            "teams": {
+                "terms": {
+                    "field":"teams.keyword",
                     "size" : 15
                 }             
             },
-            "music": {
+            "career_info": {
                 "terms": {
-                    "field":"Music_si.keyword",
+                    "field":"career_info.keyword",
                     "size" : 15
                 }             
             },
-            "lyrics": {
+            "bio": {
                 "terms": {
-                    "field":"Lyrics_si.keyword",
+                    "field":"bio.keyword",
                     "size" : 15
                 }             
             },
-
         }
     })
-    list_songs, artists, genres, music, lyrics = post_processing_text(results)
-    return list_songs, artists, genres, music, lyrics
-
-# def top_most_filter_text(search_term, artist_filter, genre_filter, music_filter, lyrics_filter):
-
-#     with open('song-corpus/songs_meta_all.json') as f:
-#         meta_data = json.loads(f.read())
-
-#     artist_list = meta_data["Artist_en"]
-#     genre_list = meta_data["Genre_en"]
-#     music_list = meta_data["Music_en"]
-#     lyrics_list = meta_data["Lyrics_en"]
-
-#     documents_artist = [search_term]
-#     documents_artist.extend(artist_list)
-#     documents_genre = [search_term]
-#     documents_genre.extend(genre_list)
-#     documents_music = [search_term]
-#     documents_music.extend(music_list)
-#     documents_lyrics = [search_term]
-#     documents_lyrics.extend(lyrics_list)
-#     query = []
-#     select_type = False
-#     size = 100
-#     term_list = search_term.split()
-#     for i in term_list:
-#         if i.isnumeric():
-#             size = i
-
-#     if len(artist_filter) != 0 :
-#         for i in artist_filter :
-#             query.append({"match" : {"Artist_si": i}})
-#     if len(genre_filter) != 0 :
-#         for i in genre_filter :
-#             query.append({"match" : {"Genre_si": i}})
-#     if len(music_filter) != 0 :
-#         for i in music_filter :
-#             query.append({"match" : {"Music_si": i}})
-#     if len(lyrics_filter) != 0 :
-#         for i in lyrics_filter :
-#             query.append({"match" : {"Lyrics_si": i}})
-
-
-#     tfidf_vectorizer = TfidfVectorizer(analyzer="char", token_pattern=u'(?u)\\b\w+\\b')
-#     tfidf_matrix = tfidf_vectorizer.fit_transform(documents_artist)
-
-#     cs = cosine_similarity(tfidf_matrix[0:1],tfidf_matrix)
-
-#     similarity_list = cs[0][1:]
-#     other_select = False
-#     max_val = max(similarity_list)
-#     if max_val >  0.85 and other_select == False:
-#         loc = np.where(similarity_list==max_val)
-#         i = loc[0][0]
-#         query.append({"match" : {"Artist_en": artist_list[i]}})
-#         select_type = True
-#         other_select = True
-
-#     tfidf_vectorizer = TfidfVectorizer(analyzer="char", token_pattern=u'(?u)\\b\w+\\b')
-#     tfidf_matrix = tfidf_vectorizer.fit_transform(documents_genre)
-
-#     cs = cosine_similarity(tfidf_matrix[0:1],tfidf_matrix)
-
-#     similarity_list = cs[0][1:]
-
-#     max_val = max(similarity_list)
-#     if max_val >  0.85 and other_select == False:
-#         loc = np.where(similarity_list==max_val)
-#         i = loc[0][0]
-#         query.append({"match" : {"Genre_en": genre_list[i]}})
-#         select_type = True
-
-#     tfidf_vectorizer = TfidfVectorizer(analyzer="char", token_pattern=u'(?u)\\b\w+\\b')
-#     tfidf_matrix = tfidf_vectorizer.fit_transform(documents_music)
-
-#     cs = cosine_similarity(tfidf_matrix[0:1],tfidf_matrix)
-
-#     similarity_list = cs[0][1:]
-#     max_val = max(similarity_list)
-#     if max_val >  0.85 and other_select == False:
-#         loc = np.where(similarity_list==max_val)
-#         i = loc[0][0]
-#         query.append({"match" : {"Music_en": music_list[i]}})
-#         select_type = True
-#         other_select = True
-
-#     tfidf_vectorizer = TfidfVectorizer(analyzer="char", token_pattern=u'(?u)\\b\w+\\b')
-#     tfidf_matrix = tfidf_vectorizer.fit_transform(documents_lyrics)
-
-#     cs = cosine_similarity(tfidf_matrix[0:1],tfidf_matrix)
-
-#     similarity_list = cs[0][1:]
-#     max_val = max(similarity_list)
-#     if max_val >  0.85 and other_select == False :
-#         loc = np.where(similarity_list==max_val)
-#         i = loc[0][0]
-#         query.append({"match" : {"Lyrics_en": lyrics_list[i]}})
-#         select_type = True
-#         other_select = True
-    
-#     if select_type != True :
-#         query.append({"match_all" : {}})
-
-#     print(query)
-#     results = es.search(index='index-songs',doc_type = 'sinhala-songs',body={
-#         "size" : 500,
-#         "query" :{
-#             "bool": {
-#                 "must": query
-#             }
-#         },
-#         "sort" :{
-#             "views": {"order": "desc"}
-#         },
-#         "aggs": {
-#             "genre": {
-#                 "terms": {
-#                     "field": "Genre_si.keyword",
-#                     "size" : 15    
-#                 }        
-#             },
-#             "artist": {
-#                 "terms": {
-#                     "field":"Artist_si.keyword",
-#                     "size" : 15
-#                 }             
-#             },
-#             "music": {
-#                 "terms": {
-#                     "field":"Music_si.keyword",
-#                     "size" : 15
-#                 }             
-#             },
-#             "lyrics": {
-#                 "terms": {
-#                     "field":"Lyrics_si.keyword",
-#                     "size" : 15
-#                 }             
-#             },
-
-#         }
-#     })
-#     list_songs, artists, genres, music, lyrics = post_processing_text(results)
-#     return list_songs, artists, genres, music, lyrics
+    list_cricketers, teams, gender =  post_processing_text(results)
+    return list_cricketers, teams, gender
 
 
 def search_query(search_term):
-    english_term = translate_to_english(search_term)
-    select_type, strip_term = intent_classifier(english_term)  
-    if select_type :
-        list_songs, artists, genres, music, lyrics = top_most_text(strip_term)
+    classifier, gender_filter, teams_filter = search_query_classifier(search_term)  
+    if classifier :
+        list_cricketers, teams, gender = search_filter_text(search_term,gender_filter, teams_filter)
     else :
         list_cricketers, teams, gender = search_text(search_term)
 
     return list_cricketers, teams, gender
 
-
-# def search_query_filtered(search_term, artist_filter, genre_filter, music_filter, lyrics_filter):
-#     english_term = translate_to_english(search_term)
-#     select_type, strip_term = intent_classifier(english_term)  
-#     if select_type :
-#         list_songs, artists, genres, music, lyrics = top_most_filter_text(strip_term, artist_filter, genre_filter, music_filter, lyrics_filter)
-#     else :
-#         list_songs, artists, genres, music, lyrics = search_filter_text(search_term, artist_filter, genre_filter, music_filter, lyrics_filter)
-
-#     return list_songs, artists, genres, music, lyrics
     
     
             
