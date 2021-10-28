@@ -85,5 +85,9 @@ You are done! You can search Sri Lankan creicketers by opening http://localhost:
 | Career Info | ඇය ඉහළ පෙළේ ආක්‍රමණශීලී පිතිකරණය සඳහා ප්‍රසිද්ධය. 2013 කාන්තා ක්‍රිකට් ලෝක කුසලානයේදී more... |
 
 ## Indexing and Quering
-
+- I used the standard indexing methods, mapping and the analyzer provided in the Elasticsearch. 
+- Intent classifiacation & Test mining
+  - Once queary is added, intent behind the query is identified. Then calssify the query according to identified intent.
+    - eg: ක්‍රිකට් ක්‍රීඩිකාවන් identified as කාන්තා ක්‍රීඩකයන්
+- The searching is done with predefined size and matching all related field in the index
 ## Features
