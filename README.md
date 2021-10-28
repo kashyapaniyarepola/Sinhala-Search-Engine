@@ -1,4 +1,4 @@
-# Sinhala-Search-Engine
+# Sinhala Search Engine: Sri Lanakan Cricketers 
 This repository conatins simple Sinhala search engine for Sri Lankan cricketers. This project is developed as a IR project CS4642 Data Mining and Information Retrieval
 
 ## Getting Started
