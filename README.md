@@ -84,3 +84,6 @@ You are done! You can search Sri Lankan creicketers by opening http://localhost:
 | Teams |ශ්‍රී ලංකාව, මෙල්බර්න් රෙනේගේඩ්ස්, යෝක්ෂයර් දියමන්ති, more... |
 | Career Info | ඇය ඉහළ පෙළේ ආක්‍රමණශීලී පිතිකරණය සඳහා ප්‍රසිද්ධය. 2013 කාන්තා ක්‍රිකට් ලෝක කුසලානයේදී more... |
 
+## Indexing and Quering
+
+## Features
