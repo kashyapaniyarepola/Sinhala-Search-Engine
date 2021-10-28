@@ -90,4 +90,12 @@ You are done! You can search Sri Lankan creicketers by opening http://localhost:
   - Once queary is added, intent behind the query is identified. Then calssify the query according to identified intent.
     - eg: ක්‍රිකට් ක්‍රීඩිකාවන් identified as කාන්තා ක්‍රීඩකයන්
 - The searching is done with predefined size and matching all related field in the index
+- Multi match query
+- Boolean query
+- Must match quary
+- Aggregations
+
 ## Features
+- Search by player name - ලසිත් මාලිංග
+- Search by gender - කාන්තා ක්‍රිකට් ක්‍රීඩිකාවන්
+- Search by played team - ගාල්ල ග්ලැඩියේටර්ස් කණ්ඩායම ක්‍රීඩා කල ක්‍රීඩකයන්
