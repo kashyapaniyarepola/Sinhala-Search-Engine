@@ -1,7 +1,6 @@
 from elasticsearch import Elasticsearch, helpers
 import json
 import re
-from googletrans import Translator
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -30,14 +29,8 @@ def post_processing_text(results):
         results['hits']['hits'][i]['_source']["bio"] = bios
         list_cricketers.append(results['hits']['hits'][i]['_source'])
     aggregations = results['aggregations']
-    ball_ranks = aggregations['ball_rank']['buckets']
-    bat_ranks = aggregations['bat_rank']['buckets']
     teams = aggregations['teams']['buckets']
-    wickets = aggregations['wickets']['buckets']
-    runs = aggregations['runs']['buckets']
-    bios = aggregations['bio']['buckets']
     gender = aggregations['gender']['buckets']
-    career_infos = aggregations['career_info']['buckets']
     # print(aggregations)
     return list_cricketers, teams, gender 
 
