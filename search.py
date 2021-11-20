@@ -111,9 +111,16 @@ def search_query_classifier(search_term):
     classifier = False
     gender_filter = [] 
     teams_filter = []
+    rank_filter = []
+    bat_rank_filter = []
+    ball_rank_filter = []
+    run_filter = []
+    wicket_filter = []
+    allrounder_filter =[]
 
     gender_keys = ["කාන්තා", "ක්‍රීඩිකාවෝ", "කාන්තාව", "ක්‍රීඩිකාව", "ක්‍රීඩිකාවන්"]
     teams_keys = ["කණ්ඩායම", "සමාජය", "කණ්ඩායම්", "වෙනුවෙන්", "කණ්ඩායමට"]
+    rank_keys = ["විස්සයි","විස්ස", "එක්" ,"දින" ,"ජාත්‍යන්තර", "ටෙස්ට්"]
     search_term_list = search_term.split()
 
     for j in search_term_list:
@@ -121,13 +128,38 @@ def search_query_classifier(search_term):
             gender_filter.append("කාන්තා")
             classifier = True
         if j in teams_keys:
-            # search_term_list.pop(j)
+            # search_term_list
+            # new_search_term = ""
+            # for k in search_term_list:
+            #     if k==j:
+            #         continue
+            #     new_search_term += k
             teams_filter.append(search_term)
             classifier = True
+        if j in rank_keys:
+            if "වර්තමාන" in search_term_list:
+                if "පිතිකරුවන්" in search_term_list:
+                    bat_rank_filter.append(search_term)
+                elif "යවන්නන්" in search_term_list:
+                    ball_rank_filter.append(search_term)
+                elif "ඉරියව්" in search_term_list:
+                    rank_filter.append(search_term)
+                else:
+                    rank_filter.append(search_term)
+            else:
+                if "පිතිකරුවන්" in search_term_list:
+                    run_filter.append(search_term)
+                elif "යවන්නන්" in search_term_list:
+                    wicket_filter.append(search_term)
+                elif "ඉරියව්" in search_term_list:
+                    allrounder_filter.append(search_term)
+                else:
+                    allrounder_filter.append(search_term)
+            classifier = True
 
-    return classifier, gender_filter, teams_filter
+    return classifier, gender_filter, teams_filter, rank_filter,bat_rank_filter, ball_rank_filter, run_filter,wicket_filter, allrounder_filter
 
-def search_filter_text(search_term, gender_filter, teams_filter):
+def search_filter_text(search_term, gender_filter, teams_filter, rank_filter,bat_rank_filter, ball_rank_filter, run_filter,wicket_filter, allrounder_filter):
     must_list = [{
                     "multi_match": {
                         "query" : search_term,
@@ -139,10 +171,26 @@ def search_filter_text(search_term, gender_filter, teams_filter):
                             
                     }
                 }]
+    must_list =[]
     if len(gender_filter) != 0 :
         must_list.append({"match" : {"gender": gender_filter[0]}})
     if len(teams_filter) != 0 :
         must_list.append({"match" : {"teams": teams_filter[0]}})
+    if len(rank_filter) != 0 :
+        must_list.append({"match" : {"ball_rank": rank_filter[0]}})
+        must_list.append({"match" : {"bat_rank": rank_filter[0]}})
+    if len(bat_rank_filter) != 0 :
+        must_list.append({"match" : {"bat_rank": bat_rank_filter[0]}})
+    if len(ball_rank_filter) != 0 :
+        must_list.append({"match" : {"ball_rank": ball_rank_filter[0]}})
+
+    if len(allrounder_filter) != 0 :
+        must_list.append({"match" : {"runs": allrounder_filter[0]}})
+        must_list.append({"match" : {"wickets": allrounder_filter[0]}})
+    if len(run_filter) != 0 :
+        must_list.append({"match" : {"runs": run_filter[0]}})
+    if len(wicket_filter) != 0 :
+        must_list.append({"match" : {"wickets": wicket_filter[0]}})
    
     results = es.search(index='index-cricket',doc_type = 'srilankan-cricketers',body={
         "size" : 500,
@@ -207,11 +255,11 @@ def search_filter_text(search_term, gender_filter, teams_filter):
 
 
 def search_query(search_term):
-    classifier, gender_filter, teams_filter = search_query_classifier(search_term)  
+    classifier, gender_filter, teams_filter, rank_filter,bat_rank_filter, ball_rank_filter, run_filter,wicket_filter, allrounder_filter = search_query_classifier(search_term)  
     if classifier :
-        list_cricketers, teams, gender = search_filter_text(search_term,gender_filter, teams_filter)
-    else :
-        list_cricketers, teams, gender = search_text(search_term)
+        list_cricketers, teams, gender = search_filter_text(search_term,gender_filter, teams_filter, rank_filter,bat_rank_filter, ball_rank_filter, run_filter,wicket_filter, allrounder_filter)
+    # else :
+    #     list_cricketers, teams, gender = search_text(search_term)
 
     return list_cricketers, teams, gender
 
