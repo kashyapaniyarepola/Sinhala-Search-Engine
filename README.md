@@ -72,7 +72,7 @@ You are done! You can search Sri Lankan creicketers by opening http://localhost:
 | search_queries.txt | Sample search queries |
 
 ## Data Fields
-| Filed | Example |
+| Field | Example |
 | --- | --- |
 | Name | චමරි අතපත්තු |
 | Gender | කාන්තා |
@@ -84,18 +84,25 @@ You are done! You can search Sri Lankan creicketers by opening http://localhost:
 | Teams |ශ්‍රී ලංකාව, මෙල්බර්න් රෙනේගේඩ්ස්, යෝක්ෂයර් දියමන්ති, more... |
 | Career Info | ඇය ඉහළ පෙළේ ආක්‍රමණශීලී පිතිකරණය සඳහා ප්‍රසිද්ධය. 2013 කාන්තා ක්‍රිකට් ලෝක කුසලානයේදී more... |
 
-## Indexing and Quering
+## Indexing, Quering and Addtional Features
 - I used the standard indexing methods, mapping and the analyzer provided in the Elasticsearch. 
 - Intent classifiacation & Test mining
   - Once queary is added, intent behind the query is identified. Then calssify the query according to identified intent.
     - eg: ක්‍රිකට් ක්‍රීඩිකාවන් identified as කාන්තා ක්‍රීඩකයන්
+  - Then the results is obtained by matching related fileds
+    - eg: Female players are identified using the gender field
+    - eg: Current players are identified using the rank field
+    - eg: Batters and ballers are identified using runs field and wickets field
 - The searching is done with predefined size and matching all related field in the index
 - Multi match query
 - Boolean query
 - Must match quary
 - Aggregations
 
-## Features
+## Example Searching Queries
 - Search by player name - ලසිත් මාලිංග
 - Search by gender - කාන්තා ක්‍රිකට් ක්‍රීඩිකාවන්
 - Search by played team - ගාල්ල ග්ලැඩියේටර්ස් කණ්ඩායම ක්‍රීඩා කල ක්‍රීඩකයන්
+- Search by played team: ගාල්ල ග්ලැඩියේටර්ස් කණ්ඩායම
+- Search by format and skills: විස්සයි විස්ස පිතිකරුවන්/පන්දු යවන්නන්/යවන්නන්/තුන් ඉරියව් ක්‍රීඩකයන්
+- Search current players by format and skill: වර්තමාන විස්සයි විස්ස පිතිකරුවන්/පන්දු යවන්නන්/යවන්නන්/තුන් ඉරියව් ක්‍රීඩකයන්
