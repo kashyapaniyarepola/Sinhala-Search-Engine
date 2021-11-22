@@ -258,8 +258,8 @@ def search_query(search_term):
     classifier, gender_filter, teams_filter, rank_filter,bat_rank_filter, ball_rank_filter, run_filter,wicket_filter, allrounder_filter = search_query_classifier(search_term)  
     if classifier :
         list_cricketers, teams, gender = search_filter_text(search_term,gender_filter, teams_filter, rank_filter,bat_rank_filter, ball_rank_filter, run_filter,wicket_filter, allrounder_filter)
-    # else :
-    #     list_cricketers, teams, gender = search_text(search_term)
+    else :
+        list_cricketers, teams, gender = search_text(search_term)
 
     return list_cricketers, teams, gender
 
